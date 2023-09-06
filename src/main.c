@@ -4,6 +4,7 @@
 unsigned int led_is_on;
 unsigned int counter;
 
+//flips on/off based on timer triggered interrupt
 void thread_entry(void)
 {
   unsigned int led_on, counter;
@@ -12,6 +13,8 @@ void thread_entry(void)
     led_on = toggle_thread_iteration(led_on, GPIOA, &counter);
   }
 }
+
+//flips on/off based on main timer
 void main(void)
 {
   led_is_on = main_thread_setup(GPIOB);
