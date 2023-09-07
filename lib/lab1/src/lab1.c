@@ -3,6 +3,7 @@
 #define THREAD_DELAY 500
 
 //sets up the struct for it to flick a specific light + the counter
+//return is initial state of led
 int toggle_thread_setup(struct gpio *dev, unsigned int* counter)
 {
   *counter = 1;
@@ -25,6 +26,7 @@ int toggle_thread_iteration(const unsigned int led_is_on, struct gpio *dev, unsi
 }
 
 //sets up the struct for it to flick a specific light
+//return is initial state of led
 int main_thread_setup(struct gpio *dev)
 {
   dev->CR |= 1 << 3;
@@ -35,9 +37,9 @@ int main_thread_setup(struct gpio *dev)
 int main_thread_iteration(const unsigned int led_is_on, struct gpio *dev)
 {
   if (led_is_on) {
-    dev->DR |= 1<<2;
+    dev->DR &= ~(1<<3);
   } else {
-    dev->DR &= ~(1<<2);
+    dev->DR |= 1<<3;
   }
   delay_ms(MAIN_DELAY);
   return !led_is_on;

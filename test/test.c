@@ -18,6 +18,17 @@ void start_thread(void (* fun)(void))
 {
 }
 
+void test_main_thread_setup()
+{
+  struct gpio dev = {0, 0};
+  unsigned int led;
+  led = main_thread_setup(&dev);
+
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(1, led,"LED did not start on.");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(0, last_delayed, "Delay was not called during setup.");
+  TEST_ASSERT_TRUE_MESSAGE(dev.CR & 1<<3, "Configuration bit was not set");
+}
+
 void test_toggle_thread_setup()
 {
   struct gpio dev = {0, 0};
@@ -28,6 +39,29 @@ void test_toggle_thread_setup()
   TEST_ASSERT_EQUAL_INT32_MESSAGE(0, last_delayed, "Delay was not called during setup.");
   TEST_ASSERT_EQUAL_INT32_MESSAGE(1, counter, "Counter was not initialized");
   TEST_ASSERT_TRUE_MESSAGE(dev.CR & 1<<2, "Configuration bit was not set");
+}
+
+void test_main_thread_iteration_active()
+{
+  struct gpio dev = {0, 1 << 3};
+  unsigned int led;
+  led = main_thread_iteration(1, &dev);
+
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(0, led, "LED was not off.");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(1000, last_delayed, "Delay was not called with correct value.");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(0, dev.DR, "GPIO reg cleared"); 
+}
+
+void test_main_thread_iteration_inactive()
+{
+  struct gpio dev = {0, 0};
+  unsigned int led;
+  led = main_thread_iteration(0, &dev);
+
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(1, led,"LED was not on.");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(1000, last_delayed, "Delay was not called with correct value.");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(0, dev.CR, "Configuration bit was changed");
+  TEST_ASSERT_EQUAL_INT32_MESSAGE(1 << 3, dev.DR, "GPIO reg st");
 }
 
 void test_toggle_thread_iteration_active()
@@ -63,5 +97,9 @@ int main (void)
   RUN_TEST(test_toggle_thread_setup);
   RUN_TEST(test_toggle_thread_iteration_inactive);
   RUN_TEST(test_toggle_thread_iteration_active);
+
+  RUN_TEST(test_main_thread_setup);
+  RUN_TEST(test_main_thread_iteration_inactive);
+  RUN_TEST(test_main_thread_iteration_active);
   return UNITY_END();
 }
